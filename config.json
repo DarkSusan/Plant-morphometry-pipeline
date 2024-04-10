@@ -1,0 +1,10 @@
+{
+    "images": [
+        "images/plancik.jpg",
+        "images/arabidopsis.jpg"
+    ],
+    "names": "plancik, arabidopsis",
+    "result": "results.json",
+    "debug": "print",
+    "debug_outdir": "./debug_plots"
+}
