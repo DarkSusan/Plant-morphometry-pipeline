@@ -1,6 +1,6 @@
 import json
 import os
-import Coordinates_extractor as Cords
+import Coordinates_extractor as Coords
 from plantcv import plantcv as pcv
 
 
@@ -10,13 +10,13 @@ class Image:
         self.img_path = img_path
 
     def get_coordinates(self):
-        return Cords.select_coordinates(self.img)
+        return Coords.select_coordinates(self.img)
 
-    def crop_image(self, x_val=0, y_val=0, h_val=0, w_val=0):
-        self.img = pcv.crop(img=self.img, x=x_val, y=y_val, h=h_val, w=w_val)
+    def crop_image(self, x=0, y=0, h=0, w=0):
+        self.img = pcv.crop(img=self.img, x=x, y=y, h=h, w=w)
 
-    def region_of_interest(self, x_val=0, y_val=0, h_val=0, w_val=0):
-        return pcv.roi.rectangle(img=self.img, x=x_val, y=y_val, h=h_val, w=w_val)
+    def region_of_interest(self, x=0, y=0, h=0, w=0):
+        return pcv.roi.rectangle(img=self.img, x=x, y=y, h=h, w=w)
 
     def rotate_image(self, angle):
         self.img = pcv.transform.rotate(self.img, angle, False)
