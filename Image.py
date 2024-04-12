@@ -5,9 +5,10 @@ from plantcv import plantcv as pcv
 
 
 class Image:
-    def __init__(self, img, img_path):
+    def __init__(self, img, img_path, background):
         self.img = img
         self.img_path = img_path
+        self.background = background
 
     def get_coordinates(self):
         return Coords.select_coordinates(self.img)
@@ -22,7 +23,7 @@ class Image:
         self.img = pcv.transform.rotate(self.img, angle, False)
 
     def color_card_analysis(self):
-        dataframe1, start1, space1 = pcv.transform.find_color_card(rgb_img=self.img, background="dark")
+        dataframe1, start1, space1 = pcv.transform.find_color_card(rgb_img=self.img, background=self.background,)
         card_mask = pcv.transform.create_color_card_mask(self.img, radius=10, start_coord=start1, spacing=space1,
                                                          nrows=6, ncols=4)
         headers, card_matrix = pcv.transform.get_color_matrix(rgb_img=self.img, mask=card_mask)
@@ -39,7 +40,6 @@ class Image:
         pcv.analyze.size(img=self.img, labeled_mask=kept_mask)
         pcv.analyze.bound_horizontal(img=self.img, labeled_mask=kept_mask, line_position=2380, label="default")
         self.img = pcv.analyze.color(rgb_img=self.img, labeled_mask=kept_mask, colorspaces='all', label="default")
-        return self
 
     def watershed_segmentation(self):
         a = pcv.rgb2gray_lab(rgb_img=self.img, channel='a')
@@ -48,7 +48,6 @@ class Image:
         masked = pcv.apply_mask(img=self.img, mask=fill_image, mask_color="black")
         analysis_images = pcv.watershed_segmentation(rgb_img=masked, mask=fill_image, distance=15, label="default")
         self.img = pcv.outputs.observations["default"]["estimated_object_count"]["value"]
-        return self
 
     def save_json(self, suffix=""):
         filename = f"{os.path.splitext(os.path.basename(self.img_path))[0]}{suffix}_results.json"

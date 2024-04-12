@@ -1,4 +1,5 @@
 import inquirer
+import shutil
 
 
 def get_mode():
@@ -20,18 +21,32 @@ def get_function():
             "function",
             message="What would you like to do?",
             choices=[
-                "crop image",
-                "rotate image",
-                "analysis with color card",
-                "analysis without color card",
+                "image processing",
+                "RGB analysis",
                 "watershed segmentation",
                 "quit",
             ],
-            carousel=True,
-        ),
+            carousel=True),
     ]
 
     return inquirer.prompt(questions_function)["function"]
+
+
+def get_image_processing():
+    questions_image_processing = [
+        inquirer.List(
+            "image_processing",
+            message="What would you like to do?",
+            choices=[
+                "crop image",
+                "rotate image",
+                "return"
+            ],
+            carousel=True,
+        )
+    ]
+
+    return inquirer.prompt(questions_image_processing)["image_processing"]
 
 
 def get_coordinates():
@@ -46,6 +61,54 @@ def get_coordinates():
 
     if not all(val.isnumeric() for val in answers.values()):
         # TODO: value correctness checking
-        raise Exception("u no has brain?")
+        raise Exception("Wrong values")
 
     return {k: int(v) for k, v in answers.items()}
+
+
+def get_region_input_method():
+    questions_input_method = [
+        inquirer.List(
+            "input_method",
+            message="How would you like to specify the region?",
+            choices=["Draw on interface", "Input values manually"],
+            carousel=True,
+        )
+    ]
+
+    return inquirer.prompt(questions_input_method)["input_method"]
+
+
+def checkbox():
+    # Check if 'feh' is installed
+    feh_installed = shutil.which('feh') is not None
+
+    # Define the options
+    options = ['Dark Background']
+    if feh_installed:
+        options.append('Show images')
+
+    questions = [
+        inquirer.Checkbox(
+            'options',
+            message="Which options would you like to toggle?",
+            choices=options,
+            default=['Dark Background', 'Show images'] if feh_installed else ['Background Dark'],
+            carousel=True
+        ),
+
+    ]
+
+    return inquirer.prompt(questions)["options"]
+
+
+def get_rgb_analysis():
+    questions = [
+        inquirer.List(
+            "rgb_analysis",
+            message="Would you like to analyze the image with a color card?",
+            choices=["Analysis with color card", "Analysis without color card"],
+        )
+    ]
+
+    return inquirer.prompt(questions)["rgb_analysis"]

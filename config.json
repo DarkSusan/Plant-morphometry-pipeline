@@ -3,8 +3,9 @@
         "images/plancik.jpg",
         "images/arabidopsis.jpg"
     ],
-    "names": "plancik, arabidopsis",
-    "result": "results.json",
+    "names": "plancik,arabidopsis",
+    "result": "./results/results.json",
     "debug": "print",
-    "debug_outdir": "./debug_plots"
+    "debug_outdir": "./debug_plots",
+    "background": "dark"
 }

@@ -8,9 +8,10 @@ import inquirer
 import threading
 import image_watcher
 import ui
+import copy
 
 
-def interactive():
+def interactive(checkbox):
     img_path = inquirer.prompt(
         [
             inquirer.Path(
@@ -41,9 +42,10 @@ def interactive():
     config = {
         "images": image_files,
         "names": image_names,
-        "result": "results.json",
+        "result": "./results/results.json",
         "debug": "print",
         "debug_outdir": "./debug_plots",
+        "background": "dark",
     }
 
     with open("config.json", "w") as f:
@@ -56,6 +58,7 @@ def interactive():
         result=config["result"],
         debug=config["debug"],
         debug_outdir=config["debug_outdir"],
+        background=config["background"],
     )
 
     pcv.params.debug = args_init.debug
@@ -67,73 +70,78 @@ def interactive():
 
     print("Reading the image...")
 
+    if 'Dark Background' in checkbox:
+        background = "dark"
+    else:
+        background = "light"
+
     img, path, filename = pcv.readimage(filename=args_init.plancik)
-    img = Image(img, img_path)
+    img = Image(img, img_path, background)
 
     while True:
         match ui.get_function():
-            case "crop image":
-                mode = input(
-                    "Would you like to input the coordinates manually? (y/N): "
-                ).lower()
-                if mode == "y":
-                    img.crop_image(**ui.get_coordinates())
-                else:
-                    coordinates = img.get_coordinates()
-                    img.crop_image(
-                        coordinates["x"],
-                        coordinates["y"],
-                        coordinates["height"],
-                        coordinates["width"],
-                    )
-                continue
-            case "rotate image":
-                img = img.rotate_image(
-                    inquirer.Text("angle", message="Enter the angle: ")
-                )
-                continue
-            case "analysis with color card":
-                rgb_img = img
-                mode = input(
-                    "Would you like to input region of interest the coordinates manually? (y/N): "
-                ).lower()
+            case "image processing":
+                match ui.get_image_processing():
+                    case "crop image":
+                        mode = ui.get_region_input_method()
+                        if mode == "Draw on interface":
+                            coordinates = img.get_coordinates()
+                            img.crop_image(
+                                coordinates["x"],
+                                coordinates["y"],
+                                coordinates["height"],
+                                coordinates["width"], )
+                        else:
+                            img.crop_image(**ui.get_coordinates())
+                        continue
+                    case "rotate image":
+                        img = img.rotate_image(
+                            inquirer.Text("angle", message="Enter the angle: ")
+                        )
+                        continue
+                    case "return":
+                        break
+            case "RGB analysis":
+                rgb_img = copy.deepcopy(img)
+                match ui.get_rgb_analysis():
+                    case "Analysis with color card":
+                        print("[!] Region of interest is needed")
+                        mode = ui.get_region_input_method()
 
-                roi = rgb_img.region_of_interest(**ui.get_coordinates())
-                if mode == "y":
-                    roi = rgb_img.region_of_interest(**ui.get_coordinates())
-                    rgb_img.color_card_analysis().basic_rgb_analysis(roi)
-                else:
-                    coordinates = rgb_img.get_coordinates()
-                    roi = rgb_img.region_of_interest(
-                        coordinates["x"],
-                        coordinates["y"],
-                        coordinates["height"],
-                        coordinates["width"],
-                    )
-                    rgb_img.color_card_analysis().basic_rgb_analysis(roi)
+                        if mode == "Draw on interface":
+                            coordinates = rgb_img.get_coordinates()
+                            roi = rgb_img.region_of_interest(
+                                coordinates["x"],
+                                coordinates["y"],
+                                coordinates["height"],
+                                coordinates["width"], )
+                            rgb_img.color_card_analysis().basic_rgb_analysis(roi)
+                        else:
+                            roi = rgb_img.region_of_interest(**ui.get_coordinates())
+                            rgb_img.color_card_analysis().basic_rgb_analysis(roi)
 
-                img.save_json(img_path)
-            case "analysis without color card":
-                mode = input(
-                    "Would you like to input region of interest the coordinates manually? (y/N): "
-                ).lower()
-                if mode == "y":
-                    roi = img.region_of_interest(**ui.get_coordinates())
-                    img.basic_rgb_analysis(roi)
-                else:
-                    coordinates = img.get_coordinates()
-                    roi = img.region_of_interest(
-                        coordinates["x"],
-                        coordinates["y"],
-                        coordinates["height"],
-                        coordinates["width"],
-                    )
-                    img.basic_rgb_analysis(roi)
+                        rgb_img.save_json("RGB_With_Card")
+                    case "Analysis without color card":
+                        print("[!] Region of interest is needed")
+                        mode = ui.get_region_input_method()
+                        if mode == "Draw on interface":
+                            coordinates = rgb_img.get_coordinates()
+                            roi = rgb_img.region_of_interest(
+                                coordinates["x"],
+                                coordinates["y"],
+                                coordinates["height"],
+                                coordinates["width"],
+                            )
+                            rgb_img.basic_rgb_analysis(roi)
+                        else:
+                            roi = rgb_img.region_of_interest(**ui.get_coordinates())
+                            rgb_img.basic_rgb_analysis(roi)
 
-                img.save_json()
+                        rgb_img.save_json("RGB_No_Card")
             case "watershed segmentation":
-                img.watershed_segmentation()
-                img.save_json("watershed_segmentation")
+                water_img = copy.deepcopy(img)
+                water_img.watershed_segmentation()
+                water_img.save_json("watershed_segmentation")
             case "quit":
                 print("Quitting...")
                 os.system(
@@ -144,11 +152,7 @@ def interactive():
 
 
 def main():
-    ensure_directory_exists("./.tmp_debug_plots")
-    watcher_thread = threading.Thread(
-        target=image_watcher.watch_debug_plots, daemon=True
-    )
-    watcher_thread.start()
+    os.makedirs("./.tmp_debug_plots", exist_ok=True)
 
     match ui.get_mode():
         case "config file":
@@ -156,7 +160,14 @@ def main():
                 "Config file mode is not implemented yet. Please choose 'interactive mode'."
             )
         case "interactive mode":
-            interactive()
+            checkbox_answers = ui.checkbox()
+            print(checkbox_answers)
+            if 'Show images' in checkbox_answers:
+                watcher_thread = threading.Thread(
+                    target=image_watcher.watch_debug_plots, daemon=True
+                )
+                watcher_thread.start()
+            interactive(checkbox_answers)
 
 
 if __name__ == "__main__":
