@@ -40,6 +40,10 @@ def get_image_processing():
             choices=[
                 "crop image",
                 "rotate image",
+                "visualize colorspaces",
+                "Create grayscale image",
+                "auto threshold",
+                "fill image",
                 "return"
             ],
             carousel=True,
@@ -112,3 +116,47 @@ def get_rgb_analysis():
     ]
 
     return inquirer.prompt(questions)["rgb_analysis"]
+
+def get_colorspaces():
+    questions = [
+        inquirer.List(
+            "colorspaces",
+            message="Which colorspace would you like to use for conversion?",
+            choices=['CMYK', 'HSV', 'LAB'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["colorspaces"]
+
+def get_CMYK():
+    questions = [
+        inquirer.List(
+            "channel",
+            message="Which channel would you like to use for conversion?",
+            choices=['C', 'M', 'Y', 'K'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["channel"]
+
+def get_HSV():
+    questions = [
+        inquirer.List(
+            "channel",
+            message="Which channel would you like to use for conversion?",
+            choices=['H', 'S', 'V'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["channel"]
+
+def get_LAB():
+    questions = [
+        inquirer.List(
+            "channel",
+            message="Which channel would you like to use for conversion?",
+            choices=['L', 'A', 'B'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["channel"]

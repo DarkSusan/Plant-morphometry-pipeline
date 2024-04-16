@@ -81,26 +81,44 @@ def interactive(checkbox):
     while True:
         match ui.get_function():
             case "image processing":
-                match ui.get_image_processing():
-                    case "crop image":
-                        mode = ui.get_region_input_method()
-                        if mode == "Draw on interface":
-                            coordinates = img.get_coordinates()
-                            img.crop_image(
-                                coordinates["x"],
-                                coordinates["y"],
-                                coordinates["height"],
-                                coordinates["width"], )
-                        else:
-                            img.crop_image(**ui.get_coordinates())
-                        continue
-                    case "rotate image":
-                        img = img.rotate_image(
-                            inquirer.Text("angle", message="Enter the angle: ")
-                        )
-                        continue
-                    case "return":
-                        break
+                while True:
+                    match ui.get_image_processing():
+                        case "crop image":
+                            mode = ui.get_region_input_method()
+                            if mode == "Draw on interface":
+                                coordinates = img.get_coordinates()
+                                img.crop_image(
+                                    coordinates["x"],
+                                    coordinates["y"],
+                                    coordinates["height"],
+                                    coordinates["width"], )
+                            else:
+                                img.crop_image(**ui.get_coordinates())
+                            continue
+                        case "rotate image":
+                            img = img.rotate_image(
+                                inquirer.Text("angle", message="Enter the angle: ")
+                            )
+                            continue
+                        case "visualize colorspaces":
+                            img.visualize_colorspaces()
+                        case "Create grayscale image":
+                            match ui.get_colorspaces():
+                                case "LAB":
+                                    img.convert_lab(ui.get_LAB())
+                                case "HSV":
+                                    img.convert_hsv(ui.get_HSV())
+                                case "CMYK":
+                                    img.convert_cmyk(ui.get_CMYK())
+                        case "auto threshold":
+                            img.auto_threshold()
+                        case "fill image":
+                            area_size = int(inquirer.prompt([
+                                inquirer.Text("area_size", message="Enter minimum object area size in pixels")
+                            ])["area_size"])
+                            img.fill_image(area_size)
+                        case "return":
+                            break
             case "RGB analysis":
                 rgb_img = copy.deepcopy(img)
                 match ui.get_rgb_analysis():
