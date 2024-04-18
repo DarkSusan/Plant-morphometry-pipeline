@@ -33,6 +33,7 @@ def get_function():
                 "image processing",
                 "RGB analysis",
                 "watershed segmentation",
+                "next image",
                 "quit",
             ],
             carousel=True),

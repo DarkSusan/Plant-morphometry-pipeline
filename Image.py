@@ -30,13 +30,16 @@ class Image:
         remainder = self.img.shape[1] % 4
         if remainder <= 2:
             new_width = self.img.shape[1] - remainder
+            # Crop the image to the new width
+            self.img = self.img[:, :new_width]
+            print(self.img.shape)
+            pcv.visualize.colorspaces(rgb_img=self.img, original_img=False)
         else:
             new_width = self.img.shape[1] + (4 - remainder)
-
-        # Crop the image to the new width
-        self.img = self.img[:, :new_width]
-        print(self.img.shape)
-        pcv.visualize.colorspaces(rgb_img=self.img, original_img=False)
+            # Crop the image to the new width
+            self.img = self.img[:, :new_width]
+            print(self.img.shape)
+            pcv.visualize.colorspaces(rgb_img=self.img, original_img=False)
 
     def convert_lab(self, channel):
         self.gray = pcv.rgb2gray_lab(rgb_img=self.img, channel=channel)
