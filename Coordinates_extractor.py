@@ -42,11 +42,9 @@ def select_coordinates(img):
                 y_value = round(min(iy, y) / scaling_factor)
                 width_value = round(abs(ix - x) / scaling_factor)
                 height_value = round(abs(iy - y) / scaling_factor)
-                print("Top left corner (x, y):", x_value, y_value)
+                print(f"Top left corner ({x_value}, {y_value}):")
                 print("Width:", width_value)
                 print("Height:", height_value)
-                print("ix, iy, x, y:", ix, iy, x, y)
-                print("scaling factor:", scaling_factor)
                 coordinates = {
                     "x": x_value,
                     "y": y_value,

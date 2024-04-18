@@ -2,6 +2,15 @@ import inquirer
 import shutil
 
 
+def get_integer_input(prompt):
+    while True:
+        try:
+            value = int(prompt)
+            return value
+        except ValueError:
+            print("Invalid input. Please enter an integer.")
+
+
 def get_mode():
     questions_mode = [
         inquirer.List(
@@ -40,9 +49,10 @@ def get_image_processing():
             choices=[
                 "crop image",
                 "rotate image",
+                "color correction",
                 "visualize colorspaces",
                 "Create grayscale image",
-                "auto threshold",
+                "Threshold Image",
                 "fill image",
                 "return"
             ],
@@ -117,6 +127,7 @@ def get_rgb_analysis():
 
     return inquirer.prompt(questions)["rgb_analysis"]
 
+
 def get_colorspaces():
     questions = [
         inquirer.List(
@@ -127,6 +138,7 @@ def get_colorspaces():
         )
     ]
     return inquirer.prompt(questions)["colorspaces"]
+
 
 def get_CMYK():
     questions = [
@@ -139,6 +151,7 @@ def get_CMYK():
     ]
     return inquirer.prompt(questions)["channel"]
 
+
 def get_HSV():
     questions = [
         inquirer.List(
@@ -150,6 +163,7 @@ def get_HSV():
     ]
     return inquirer.prompt(questions)["channel"]
 
+
 def get_LAB():
     questions = [
         inquirer.List(
@@ -160,3 +174,15 @@ def get_LAB():
         )
     ]
     return inquirer.prompt(questions)["channel"]
+
+
+def get_threshold_method():
+    questions = [
+        inquirer.List(
+            "threshold_method",
+            message="Which thresholding method would you like to use?",
+            choices=['Otsu auto threshold', 'Triangle auto threshold'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["threshold_method"]

@@ -75,7 +75,7 @@ def interactive(checkbox):
     else:
         background = "light"
 
-    img, path, filename = pcv.readimage(filename=args_init.plancik)
+    img, path, filename = pcv.readimage(filename=args_init.image_names)
     img = Image(img, img_path, background)
 
     while True:
@@ -96,10 +96,12 @@ def interactive(checkbox):
                                 img.crop_image(**ui.get_coordinates())
                             continue
                         case "rotate image":
-                            img = img.rotate_image(
+                            img = img.rotate_image(ui.get_integer_input(
                                 inquirer.Text("angle", message="Enter the angle: ")
-                            )
+                            ))
                             continue
+                        case "color correction":
+                            img.color_color_correction()
                         case "visualize colorspaces":
                             img.visualize_colorspaces()
                         case "Create grayscale image":
@@ -110,55 +112,47 @@ def interactive(checkbox):
                                     img.convert_hsv(ui.get_HSV())
                                 case "CMYK":
                                     img.convert_cmyk(ui.get_CMYK())
-                        case "auto threshold":
-                            img.auto_threshold()
+                        case "Threshold Image":
+                            match ui.get_threshold_method():
+                                case "Triangle auto threshold":
+                                    xstep_val = int(inquirer.prompt([
+                                        inquirer.Text("xstep_val",
+                                                      message="Enter xstep value for triangle thresholding")
+                                    ])["xstep_val"])
+                                    img.triangle_auto_threshold(ui.get_integer_input(xstep_val))
+                                case "Otsu auto threshold":
+                                    img.otsu_auto_threshold()
                         case "fill image":
                             area_size = int(inquirer.prompt([
                                 inquirer.Text("area_size", message="Enter minimum object area size in pixels")
                             ])["area_size"])
-                            img.fill_image(area_size)
+                            img.fill_image(ui.get_integer_input(area_size))
                         case "return":
                             break
             case "RGB analysis":
                 rgb_img = copy.deepcopy(img)
-                match ui.get_rgb_analysis():
-                    case "Analysis with color card":
-                        print("[!] Region of interest is needed")
-                        mode = ui.get_region_input_method()
+                print("[!] Region of interest is needed")
+                mode = ui.get_region_input_method()
+                if mode == "Draw on interface":
+                    coordinates = rgb_img.get_coordinates()
+                    roi = rgb_img.region_of_interest(
+                        coordinates["x"],
+                        coordinates["y"],
+                        coordinates["height"],
+                        coordinates["width"],
+                    )
+                    rgb_img.basic_rgb_analysis(roi)
+                else:
+                    roi = rgb_img.region_of_interest(**ui.get_coordinates())
+                    rgb_img.basic_rgb_analysis(roi)
 
-                        if mode == "Draw on interface":
-                            coordinates = rgb_img.get_coordinates()
-                            roi = rgb_img.region_of_interest(
-                                coordinates["x"],
-                                coordinates["y"],
-                                coordinates["height"],
-                                coordinates["width"], )
-                            rgb_img.color_card_analysis().basic_rgb_analysis(roi)
-                        else:
-                            roi = rgb_img.region_of_interest(**ui.get_coordinates())
-                            rgb_img.color_card_analysis().basic_rgb_analysis(roi)
-
-                        rgb_img.save_json("RGB_With_Card")
-                    case "Analysis without color card":
-                        print("[!] Region of interest is needed")
-                        mode = ui.get_region_input_method()
-                        if mode == "Draw on interface":
-                            coordinates = rgb_img.get_coordinates()
-                            roi = rgb_img.region_of_interest(
-                                coordinates["x"],
-                                coordinates["y"],
-                                coordinates["height"],
-                                coordinates["width"],
-                            )
-                            rgb_img.basic_rgb_analysis(roi)
-                        else:
-                            roi = rgb_img.region_of_interest(**ui.get_coordinates())
-                            rgb_img.basic_rgb_analysis(roi)
-
-                        rgb_img.save_json("RGB_No_Card")
+                    rgb_img.save_json("RGB_No_Card")
             case "watershed segmentation":
                 water_img = copy.deepcopy(img)
-                water_img.watershed_segmentation()
+                distance_val = int(inquirer.prompt([
+                    inquirer.Text("distance_val", message="Enter distance value for watershed segmentation")
+                ])["distance_val"])
+                water_img.watershed_segmentation(distance_val)
                 water_img.save_json("watershed_segmentation")
             case "quit":
                 print("Quitting...")
