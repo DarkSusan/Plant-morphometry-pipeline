@@ -13,6 +13,8 @@ class Image:
         self.gray = None
         self.threshold = None
         self.mask = None
+        self.rgb_analysis = None
+        self.watershed = None
         self.config = config
         self.has_config = True if config else False
 
@@ -111,33 +113,19 @@ class Image:
         if not self.has_config:
             self.config.append(partial(Image.fill_image, area_size=area_size))
 
-    def color_correction(self):
-        dataframe1, start1, space1 = pcv.transform.find_color_card(
-            rgb_img=self.img,
-            background=self.background,
-        )
-        card_mask = pcv.transform.create_color_card_mask(
-            self.img,
-            radius=10,
-            start_coord=start1,
-            spacing=space1,
-            nrows=6,
-            ncols=4,
-        )
-        headers, card_matrix = pcv.transform.get_color_matrix(
-            rgb_img=self.img, mask=card_mask
-        )
-        std_color_matrix = pcv.transform.std_color_matrix(pos=3)
-        self.img = pcv.transform.affine_color_correction(
-            self.img, card_matrix, std_color_matrix
-        )
+    def color_correction(self, radius_val=10, pos_val=3, nrows_val=6, ncols_val=4):
+        dataframe1, start1, space1 = pcv.transform.find_color_card(rgb_img=self.img, background=self.background, )
+        card_mask = pcv.transform.create_color_card_mask(self.img, radius=radius_val, start_coord=start1,
+                                                         spacing=space1,
+                                                         nrows=nrows_val, ncols=ncols_val)
+        headers, card_matrix = pcv.transform.get_color_matrix(rgb_img=self.img, mask=card_mask)
+        std_color_matrix = pcv.transform.std_color_matrix(pos=pos_val)
+        self.img = pcv.transform.affine_color_correction(self.img, card_matrix, std_color_matrix)
 
         if not self.has_config:
             self.config.append(Image.color_correction)
 
     def basic_rgb_analysis(self, region_of_interest):
-        # thresh1 = pcv.threshold.dual_channels(rgb_img=self.img, x_channel="a", y_channel="b",
-        #                                      points=[(80, 80), (125, 140)], above=True)
         kept_mask = pcv.roi.filter(
             mask=self.mask, roi=region_of_interest, roi_type="partial"
         )
@@ -148,12 +136,6 @@ class Image:
             line_position=2380,
             label="default",
         )
-        self.img = pcv.analyze.color(
-            rgb_img=self.img,
-            labeled_mask=kept_mask,
-            colorspaces="all",
-            label="default",
-        )
 
         if not self.has_config:
             self.config.append(
@@ -162,6 +144,11 @@ class Image:
                     region_of_interest=region_of_interest,
                 )
             )
+
+    def color_histogram(self, colorspace):
+        pcv.analyze.color(rgb_img=self.img, labeled_mask=self.mask, colorspaces=colorspace,
+                          label="default")
+        pcv.visualize.histogram(img=self.img, mask=self.mask, hist_data=True)
 
     def watershed_segmentation(self, distance_val):
         # a = pcv.rgb2gray_lab(rgb_img=self.img, channel='a')
@@ -180,7 +167,7 @@ class Image:
             distance=distance_val,
             label="default",
         )
-        self.img = pcv.outputs.observations["default"][
+        self.watershed = pcv.outputs.observations["default"][
             "estimated_object_count"
         ]["value"]
 

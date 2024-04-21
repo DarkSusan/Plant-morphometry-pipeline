@@ -33,6 +33,7 @@ def get_function():
                 "image processing",
                 "RGB analysis",
                 "watershed segmentation",
+                "visualize results",
                 "next image",
                 "quit",
             ],
@@ -141,6 +142,18 @@ def get_colorspaces():
     return inquirer.prompt(questions)["colorspaces"]
 
 
+def get_visualization_colorspaces():
+    questions = [
+        inquirer.List(
+            "colorspaces",
+            message="Which colorspace would you like to use for visualization?",
+            choices=['ALL', 'RGB', 'HSV', 'LAB'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["colorspaces"]
+
+
 def get_CMYK():
     questions = [
         inquirer.List(
@@ -187,3 +200,16 @@ def get_threshold_method():
         )
     ]
     return inquirer.prompt(questions)["threshold_method"]
+
+
+def get_visualization():
+    questions_mode = [
+        inquirer.List(
+            "visualization",
+            message="What analysis would you like to visualize?",
+            choices=["Color Analysis"],
+            carousel=True,
+        )
+    ]
+
+    return inquirer.prompt(questions_mode)["visualization"]

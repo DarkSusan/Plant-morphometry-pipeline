@@ -1,5 +1,4 @@
 import ui
-import copy
 from workflow import *
 
 
@@ -97,27 +96,26 @@ def interactive(checkbox):
                             case "return":
                                 break
                 case "RGB analysis":
-                    rgb_img = copy.deepcopy(img)
                     print("[!] Region of interest is needed")
                     mode = ui.get_region_input_method()
                     if mode == "Draw on interface":
-                        coordinates = rgb_img.get_coordinates()
-                        roi = rgb_img.region_of_interest(
+                        coordinates = img.get_coordinates()
+                        roi = img.region_of_interest(
                             coordinates["x"],
                             coordinates["y"],
                             coordinates["height"],
                             coordinates["width"],
                         )
-                        rgb_img.basic_rgb_analysis(roi)
+                        img.basic_rgb_analysis(roi)
                     else:
-                        roi = rgb_img.region_of_interest(
+                        roi = img.region_of_interest(
                             **ui.get_coordinates()
                         )
-                        rgb_img.basic_rgb_analysis(roi)
+                        img.basic_rgb_analysis(roi)
 
-                        rgb_img.save_json("RGB_No_Card")
+                        img.save_json("RGB_No_Card")
+
                 case "watershed segmentation":
-                    water_img = copy.deepcopy(img)
                     distance_val = int(
                         inquirer.prompt(
                             [
@@ -128,8 +126,21 @@ def interactive(checkbox):
                             ]
                         )["distance_val"]
                     )
-                    water_img.watershed_segmentation(distance_val)
-                    water_img.save_json("watershed_segmentation")
+                    img.watershed_segmentation(distance_val)
+                    img.save_json("watershed_segmentation")
+                case "visualize results":
+                    match ui.get_visualization():
+                        case "Color Analysis":
+                            match ui.get_visualization_colorspaces():
+                                case "ALL":
+                                    img.color_histogram("all")
+                                case "RGB":
+                                    img.color_histogram("RGB")
+                                case "LAB":
+                                    img.color_histogram("LAB")
+                                case "HSV":
+                                    img.color_histogram("HSV")
+
                 case "next image":
                     if not config:
                         config = img.get_config()
@@ -142,4 +153,3 @@ def interactive(checkbox):
                     )
                     os.system(f"rm -r .tmp_debug_plots")
                     exit("Goodbye!")
-
