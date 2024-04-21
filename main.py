@@ -16,7 +16,7 @@ def main():
         case "interactive mode":
             checkbox_answers = ui.checkbox()
             print(checkbox_answers)
-            if 'Show images' in checkbox_answers:
+            if "Show images" in checkbox_answers:
                 watcher_thread = threading.Thread(
                     target=image_watcher.watch_debug_plots, daemon=True
                 )

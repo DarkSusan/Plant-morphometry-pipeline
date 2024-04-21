@@ -1,3 +1,4 @@
+from enum import Enum
 from plantcv import plantcv as pcv
 from plantcv.parallel import WorkflowInputs
 import json
@@ -5,6 +6,20 @@ import os
 import inquirer
 import glob
 from Image import Image
+
+process_map = {
+    "crop": Image.crop_image,
+    "rotate": Image.rotate_image,
+    "color_correction": Image.color_correction,
+    "grayscale_convert_cmyk": Image.convert_cmyk,
+    "grayscale_convert_hsv": Image.convert_hsv,
+    "grayscale_convert_lab": Image.convert_lab,
+    "threshold_otsu": Image.otsu_auto_threshold,
+    "threshold_triangle": Image.triangle_auto_threshold,
+    "fill": Image.fill_image,
+    "rgb_analysis": Image.basic_rgb_analysis,
+    "watershed_segmentation": Image.watershed_segmentation,
+}
 
 
 def read_image():
@@ -38,9 +53,9 @@ def read_image():
     return image_files
 
 
-def get_images(img_file, background):
+def get_image(img_file, background, config=None):
     img, path, filename = pcv.readimage(filename=img_file)
-    img = Image(img, img_file, background)
+    img = Image(img, img_file, background, config)
 
     return img
 
