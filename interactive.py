@@ -77,10 +77,38 @@ def interactive(checkbox):
                                             )["xstep_val"]
                                         )
                                         img.triangle_auto_threshold(
-                                            ui.get_integer_input(xstep_val)
+                                            ui.get_integer_input(xstep_val), ui.get_object_type()
                                         )
                                     case "Otsu auto threshold":
-                                        img.otsu_auto_threshold()
+                                        img.otsu_auto_threshold(ui.get_object_type())
+                                    case "Dual channel threshold":
+                                        while True:
+                                            match ui.get_color_scatter_plot():
+                                                case "Select colorspaces":
+                                                    match ui.get_colorspaces():
+                                                        case "LAB":
+                                                            x_channel = ui.get_LAB()
+                                                        case "HSV":
+                                                            x_channel = ui.get_HSV()
+                                                        case "CMYK":
+                                                            x_channel = ui.get_CMYK()
+                                                    match ui.get_colorspaces():
+                                                        case "LAB":
+                                                            y_channel = ui.get_LAB()
+                                                        case "HSV":
+                                                            y_channel = ui.get_HSV()
+                                                        case "CMYK":
+                                                            y_channel = ui.get_CMYK()
+                                                case "visualize colorspaces in scatter plot":
+                                                    img.scatter_plot(x_channel, y_channel)
+                                                case "Create mask":
+                                                    points = inquirer.Text(
+                                                        "points",
+                                                        message="Enter points in brackets separated by commas",
+                                                        default="(80, 80),(125,140)")
+                                                    img.dual_channel_threshold(x_channel, y_channel, points)
+                                                    break
+
                             case "fill image":
                                 area_size = int(
                                     inquirer.prompt(

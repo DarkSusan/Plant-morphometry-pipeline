@@ -29,6 +29,8 @@ def read_image():
                 "img_path",
                 message="Enter image or directory path",
                 default="images",
+                normalize_to_absolute_path=True,
+
             )
         ]
     )["img_path"]
@@ -55,8 +57,7 @@ def read_image():
 
 def get_image(img_file, background, config=None):
     img, path, filename = pcv.readimage(filename=img_file)
-    img = Image(img, img_file, background, config)
-
+    img = Image(img, os.path.abspath(path), background, config)
     return img
 
 

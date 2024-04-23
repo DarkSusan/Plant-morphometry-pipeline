@@ -45,7 +45,7 @@ class Image:
             self.config.append(partial(Image.rotate_image, angle=angle))
 
     def visualize_colorspaces(self):
-        # Code to find the closest number divisible by 4 because visualize colorspaces is retarted
+        # Code to find the closest number divisible by 4 because visualize colorspaces is retarded
         remainder = self.img.shape[1] % 4
         if remainder <= 2:
             new_width = self.img.shape[1] - remainder
@@ -81,11 +81,7 @@ class Image:
         if not self.has_config:
             self.config.append(partial(Image.convert_cmyk, channel=channel))
 
-    def otsu_auto_threshold(self):
-        if self.background == "light":
-            obj = "dark"
-        else:
-            obj = "light"
+    def otsu_auto_threshold(self, obj):
         self.threshold = pcv.threshold.otsu(
             gray_img=self.gray, object_type=obj
         )
@@ -93,17 +89,20 @@ class Image:
         if not self.has_config:
             self.config.append(Image.otsu_auto_threshold)
 
-    def triangle_auto_threshold(self, xstep_val):
-        if self.background == "light":
-            obj = "dark"
-        else:
-            obj = "light"
+    def triangle_auto_threshold(self, xstep_val, obj):
         self.threshold = pcv.threshold.triangle(
             gray_img=self.gray, object_type=obj, xstep=xstep_val
         )
 
         if not self.has_config:
             self.config.append(Image.triangle_auto_threshold)
+
+    def dual_channel_threshold(self, x_ch, y_ch, pts):
+        self.threshold = pcv.threshold.dual_channels(rgb_img=self.img, x_channel=x_ch, y_channel=y_ch, points=pts,
+                                                     above=True)
+
+        if not self.has_config:
+            self.config.append(Image.dual_channel_threshold)
 
     def fill_image(self, area_size):
         self.mask = pcv.fill_holes(
@@ -150,10 +149,12 @@ class Image:
                           label="default")
         pcv.visualize.histogram(img=self.img, mask=self.mask, hist_data=True)
 
+    def scatter_plot(self, x_channel, y_channel):
+        pcv.visualize.pixel_scatter_plot(
+            paths_to_imgs=self.img_path, x_channel=x_channel, y_channel=y_channel
+        )
+
     def watershed_segmentation(self, distance_val):
-        # a = pcv.rgb2gray_lab(rgb_img=self.img, channel='a')
-        # img_binary = pcv.threshold.binary(gray_img=a, threshold=110, object_type='dark')
-        # fill_image = pcv.fill(bin_img=self.threshold)
         if self.background == "light":
             color_mask = "BLACK"
         else:

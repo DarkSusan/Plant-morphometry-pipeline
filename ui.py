@@ -195,7 +195,7 @@ def get_threshold_method():
         inquirer.List(
             "threshold_method",
             message="Which thresholding method would you like to use?",
-            choices=['Otsu auto threshold', 'Triangle auto threshold'],
+            choices=['Otsu auto threshold', 'Triangle auto threshold', 'Dual channel threshold'],
             carousel=True,
         )
     ]
@@ -213,3 +213,26 @@ def get_visualization():
     ]
 
     return inquirer.prompt(questions_mode)["visualization"]
+
+def get_object_type():
+    questions = [
+        inquirer.List(
+            "object_type",
+            message="Is your plant light or dark in grayscale image?",
+            choices=["light", "dark"],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["object_type"]
+
+
+def get_color_scatter_plot():
+    questions = [
+        inquirer.List(
+            "dual_channel_selection",
+            message="What would you like to do?",
+            choices=['Select colorspaces', 'visualize colorspaces in scatter plot', 'Create mask'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["dual_channel_selection"]
