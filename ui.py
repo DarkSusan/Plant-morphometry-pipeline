@@ -37,7 +37,8 @@ def get_function():
                 "next image",
                 "quit",
             ],
-            carousel=True),
+            carousel=True,
+        ),
     ]
 
     return inquirer.prompt(questions_function)["function"]
@@ -56,7 +57,7 @@ def get_image_processing():
                 "Create grayscale image",
                 "Threshold Image",
                 "fill image",
-                "return"
+                "return",
             ],
             carousel=True,
         )
@@ -97,22 +98,25 @@ def get_region_input_method():
 
 def checkbox():
     # Check if 'feh' is installed
-    feh_installed = shutil.which('feh') is not None
+    feh_installed = shutil.which("feh") is not None
 
     # Define the options
-    options = ['Dark Background']
+    options = ["Dark Background"]
     if feh_installed:
-        options.append('Show images')
+        options.append("Show images")
 
     questions = [
         inquirer.Checkbox(
-            'options',
+            "options",
             message="Which options would you like to toggle?",
             choices=options,
-            default=['Dark Background', 'Show images'] if feh_installed else ['Background Dark'],
-            carousel=True
+            default=(
+                ["Dark Background", "Show images"]
+                if feh_installed
+                else ["Background Dark"]
+            ),
+            carousel=True,
         ),
-
     ]
 
     return inquirer.prompt(questions)["options"]
@@ -123,19 +127,22 @@ def get_rgb_analysis():
         inquirer.List(
             "rgb_analysis",
             message="Would you like to analyze the image with a color card?",
-            choices=["Analysis with color card", "Analysis without color card"],
+            choices=[
+                "Analysis with color card",
+                "Analysis without color card",
+            ],
         )
     ]
 
     return inquirer.prompt(questions)["rgb_analysis"]
 
 
-def get_colorspaces():
+def get_colorspaces(available_choices=["CMYK", "HSV", "LAB"]):
     questions = [
         inquirer.List(
             "colorspaces",
             message="Which colorspace would you like to use for conversion?",
-            choices=['CMYK', 'HSV', 'LAB'],
+            choices=available_choices,
             carousel=True,
         )
     ]
@@ -147,7 +154,7 @@ def get_visualization_colorspaces():
         inquirer.List(
             "colorspaces",
             message="Which colorspace would you like to use for visualization?",
-            choices=['ALL', 'RGB', 'HSV', 'LAB'],
+            choices=["ALL", "RGB", "HSV", "LAB"],
             carousel=True,
         )
     ]
@@ -159,7 +166,7 @@ def get_CMYK():
         inquirer.List(
             "channel",
             message="Which channel would you like to use for conversion?",
-            choices=['C', 'M', 'Y', 'K'],
+            choices=["C", "M", "Y", "K"],
             carousel=True,
         )
     ]
@@ -171,7 +178,19 @@ def get_HSV():
         inquirer.List(
             "channel",
             message="Which channel would you like to use for conversion?",
-            choices=['H', 'S', 'V'],
+            choices=["H", "S", "V"],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["channel"]
+
+
+def get_RGB():
+    questions = [
+        inquirer.List(
+            "channel",
+            message="Which channel would you like to use for conversion?",
+            choices=["R", "G", "B"],
             carousel=True,
         )
     ]
@@ -183,7 +202,7 @@ def get_LAB():
         inquirer.List(
             "channel",
             message="Which channel would you like to use for conversion?",
-            choices=['L', 'A', 'B'],
+            choices=["L", "A", "B"],
             carousel=True,
         )
     ]
@@ -195,7 +214,11 @@ def get_threshold_method():
         inquirer.List(
             "threshold_method",
             message="Which thresholding method would you like to use?",
-            choices=['Otsu auto threshold', 'Triangle auto threshold', 'Dual channel threshold'],
+            choices=[
+                "Otsu auto threshold",
+                "Triangle auto threshold",
+                "Dual channel threshold",
+            ],
             carousel=True,
         )
     ]
@@ -214,6 +237,7 @@ def get_visualization():
 
     return inquirer.prompt(questions_mode)["visualization"]
 
+
 def get_object_type():
     questions = [
         inquirer.List(
@@ -231,7 +255,11 @@ def get_color_scatter_plot():
         inquirer.List(
             "dual_channel_selection",
             message="What would you like to do?",
-            choices=['Select colorspaces', 'visualize colorspaces in scatter plot', 'Create mask'],
+            choices=[
+                "Select colorspaces",
+                "visualize colorspaces in scatter plot",
+                "Create mask",
+            ],
             carousel=True,
         )
     ]

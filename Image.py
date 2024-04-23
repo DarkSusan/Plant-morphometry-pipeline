@@ -1,7 +1,9 @@
+import glob
 import json
 import os
 import Coordinates_extractor as Coords
 from functools import partial
+from matplotlib import pyplot as plt
 from plantcv import plantcv as pcv
 
 
@@ -98,8 +100,13 @@ class Image:
             self.config.append(Image.triangle_auto_threshold)
 
     def dual_channel_threshold(self, x_ch, y_ch, pts):
-        self.threshold = pcv.threshold.dual_channels(rgb_img=self.img, x_channel=x_ch, y_channel=y_ch, points=pts,
-                                                     above=True)
+        self.threshold = pcv.threshold.dual_channels(
+            rgb_img=self.img,
+            x_channel=x_ch,
+            y_channel=y_ch,
+            points=pts,
+            above=True,
+        )
 
         if not self.has_config:
             self.config.append(Image.dual_channel_threshold)
@@ -112,14 +119,28 @@ class Image:
         if not self.has_config:
             self.config.append(partial(Image.fill_image, area_size=area_size))
 
-    def color_correction(self, radius_val=10, pos_val=3, nrows_val=6, ncols_val=4):
-        dataframe1, start1, space1 = pcv.transform.find_color_card(rgb_img=self.img, background=self.background, )
-        card_mask = pcv.transform.create_color_card_mask(self.img, radius=radius_val, start_coord=start1,
-                                                         spacing=space1,
-                                                         nrows=nrows_val, ncols=ncols_val)
-        headers, card_matrix = pcv.transform.get_color_matrix(rgb_img=self.img, mask=card_mask)
+    def color_correction(
+        self, radius_val=10, pos_val=3, nrows_val=6, ncols_val=4
+    ):
+        dataframe1, start1, space1 = pcv.transform.find_color_card(
+            rgb_img=self.img,
+            background=self.background,
+        )
+        card_mask = pcv.transform.create_color_card_mask(
+            self.img,
+            radius=radius_val,
+            start_coord=start1,
+            spacing=space1,
+            nrows=nrows_val,
+            ncols=ncols_val,
+        )
+        headers, card_matrix = pcv.transform.get_color_matrix(
+            rgb_img=self.img, mask=card_mask
+        )
         std_color_matrix = pcv.transform.std_color_matrix(pos=pos_val)
-        self.img = pcv.transform.affine_color_correction(self.img, card_matrix, std_color_matrix)
+        self.img = pcv.transform.affine_color_correction(
+            self.img, card_matrix, std_color_matrix
+        )
 
         if not self.has_config:
             self.config.append(Image.color_correction)
@@ -145,14 +166,21 @@ class Image:
             )
 
     def color_histogram(self, colorspace):
-        pcv.analyze.color(rgb_img=self.img, labeled_mask=self.mask, colorspaces=colorspace,
-                          label="default")
+        pcv.analyze.color(
+            rgb_img=self.img,
+            labeled_mask=self.mask,
+            colorspaces=colorspace,
+            label="default",
+        )
         pcv.visualize.histogram(img=self.img, mask=self.mask, hist_data=True)
 
     def scatter_plot(self, x_channel, y_channel):
         pcv.visualize.pixel_scatter_plot(
-            paths_to_imgs=self.img_path, x_channel=x_channel, y_channel=y_channel
+            paths_to_imgs=[self.img_path],
+            x_channel=x_channel,
+            y_channel=y_channel,
         )
+        plt.show()
 
     def watershed_segmentation(self, distance_val):
         if self.background == "light":

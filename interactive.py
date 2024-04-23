@@ -1,4 +1,5 @@
 import ui
+import re
 from workflow import *
 
 
@@ -77,36 +78,93 @@ def interactive(checkbox):
                                             )["xstep_val"]
                                         )
                                         img.triangle_auto_threshold(
-                                            ui.get_integer_input(xstep_val), ui.get_object_type()
+                                            ui.get_integer_input(xstep_val),
+                                            ui.get_object_type(),
                                         )
                                     case "Otsu auto threshold":
-                                        img.otsu_auto_threshold(ui.get_object_type())
+                                        img.otsu_auto_threshold(
+                                            ui.get_object_type()
+                                        )
                                     case "Dual channel threshold":
+                                        x_channel, y_channel = None, None
                                         while True:
                                             match ui.get_color_scatter_plot():
                                                 case "Select colorspaces":
-                                                    match ui.get_colorspaces():
+                                                    match ui.get_colorspaces(
+                                                        ["HSV", "LAB", "RGB"]
+                                                    ):
                                                         case "LAB":
-                                                            x_channel = ui.get_LAB()
+                                                            x_channel = (
+                                                                ui.get_LAB().lower()
+                                                            )
                                                         case "HSV":
-                                                            x_channel = ui.get_HSV()
-                                                        case "CMYK":
-                                                            x_channel = ui.get_CMYK()
-                                                    match ui.get_colorspaces():
+                                                            x_channel = (
+                                                                ui.get_HSV().lower()
+                                                            )
+                                                        case "RGB":
+                                                            x_channel = (
+                                                                ui.get_RGB()
+                                                            )
+                                                    match ui.get_colorspaces(
+                                                        ["HSV", "LAB", "RGB"]
+                                                    ):
                                                         case "LAB":
-                                                            y_channel = ui.get_LAB()
+                                                            y_channel = (
+                                                                ui.get_LAB().lower()
+                                                            )
                                                         case "HSV":
-                                                            y_channel = ui.get_HSV()
-                                                        case "CMYK":
-                                                            y_channel = ui.get_CMYK()
+                                                            y_channel = (
+                                                                ui.get_HSV().lower()
+                                                            )
+                                                        case "RGB":
+                                                            y_channel = (
+                                                                ui.get_RGB()
+                                                            )
                                                 case "visualize colorspaces in scatter plot":
-                                                    img.scatter_plot(x_channel, y_channel)
+                                                    if not all(
+                                                        (x_channel, y_channel)
+                                                    ):
+                                                        print(
+                                                            "You need to select colorspaces first!"
+                                                        )
+                                                        continue
+                                                    img.scatter_plot(
+                                                        x_channel, y_channel
+                                                    )
                                                 case "Create mask":
-                                                    points = inquirer.Text(
-                                                        "points",
-                                                        message="Enter points in brackets separated by commas",
-                                                        default="(80, 80),(125,140)")
-                                                    img.dual_channel_threshold(x_channel, y_channel, points)
+                                                    points = inquirer.prompt(
+                                                        [
+                                                            inquirer.Text(
+                                                                "points",
+                                                                message="Enter points in brackets separated by commas",
+                                                                default="(80, 80),(125,140)",
+                                                            )
+                                                        ]
+                                                    )["points"]
+
+                                                    pattern = r"\b\d{1,3}\b"
+                                                    points = [
+                                                        int(point)
+                                                        for point in re.findall(
+                                                            pattern, points
+                                                        )
+                                                    ]
+                                                    print(points)
+
+                                                    img.dual_channel_threshold(
+                                                        x_channel,
+                                                        y_channel,
+                                                        [
+                                                            (
+                                                                points[0],
+                                                                points[1],
+                                                            ),
+                                                            (
+                                                                points[2],
+                                                                points[3],
+                                                            ),
+                                                        ],
+                                                    )
                                                     break
 
                             case "fill image":
@@ -136,9 +194,7 @@ def interactive(checkbox):
                         )
                         img.basic_rgb_analysis(roi)
                     else:
-                        roi = img.region_of_interest(
-                            **ui.get_coordinates()
-                        )
+                        roi = img.region_of_interest(**ui.get_coordinates())
                         img.basic_rgb_analysis(roi)
 
                         img.save_json("RGB_No_Card")
