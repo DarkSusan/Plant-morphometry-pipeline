@@ -6,8 +6,7 @@ from interactive import interactive
 
 
 def main():
-    os.makedirs("./.tmp_debug_plots", exist_ok=True)
-
+    os.makedirs(".tmp_debug_plots", exist_ok=True)
     match ui.get_mode():
         case "config file":
             exit(

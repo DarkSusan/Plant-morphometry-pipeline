@@ -32,6 +32,7 @@ def get_function():
             choices=[
                 "image processing",
                 "RGB analysis",
+                "morphology analysis",
                 "watershed segmentation",
                 "visualize results",
                 "next image",
@@ -53,9 +54,9 @@ def get_image_processing():
                 "crop image",
                 "rotate image",
                 "color correction",
-                "visualize colorspaces",
-                "Create grayscale image",
-                "Threshold Image",
+                "threshold image",
+                "roi filter on mask",
+                "dilate mask",
                 "fill image",
                 "return",
             ],
@@ -137,12 +138,12 @@ def get_rgb_analysis():
     return inquirer.prompt(questions)["rgb_analysis"]
 
 
-def get_colorspaces(available_choices=["CMYK", "HSV", "LAB"]):
+def get_colorspaces(selections):
     questions = [
         inquirer.List(
             "colorspaces",
             message="Which colorspace would you like to use for conversion?",
-            choices=available_choices,
+            choices=selections,
             carousel=True,
         )
     ]
@@ -166,7 +167,7 @@ def get_CMYK():
         inquirer.List(
             "channel",
             message="Which channel would you like to use for conversion?",
-            choices=["C", "M", "Y", "K"],
+            choices=['C', 'M', 'Y', 'K'],
             carousel=True,
         )
     ]
@@ -178,19 +179,7 @@ def get_HSV():
         inquirer.List(
             "channel",
             message="Which channel would you like to use for conversion?",
-            choices=["H", "S", "V"],
-            carousel=True,
-        )
-    ]
-    return inquirer.prompt(questions)["channel"]
-
-
-def get_RGB():
-    questions = [
-        inquirer.List(
-            "channel",
-            message="Which channel would you like to use for conversion?",
-            choices=["R", "G", "B"],
+            choices=['H', 'S', 'V'],
             carousel=True,
         )
     ]
@@ -202,7 +191,19 @@ def get_LAB():
         inquirer.List(
             "channel",
             message="Which channel would you like to use for conversion?",
-            choices=["L", "A", "B"],
+            choices=['L', 'A', 'B'],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["channel"]
+
+
+def get_RGB():
+    questions = [
+        inquirer.List(
+            "channel",
+            message="Which channel would you like to use for conversion?",
+            choices=['R', 'G', 'B'],
             carousel=True,
         )
     ]
@@ -215,14 +216,65 @@ def get_threshold_method():
             "threshold_method",
             message="Which thresholding method would you like to use?",
             choices=[
-                "Otsu auto threshold",
-                "Triangle auto threshold",
+                "Auto threshold",
+                "Binary threshold",
                 "Dual channel threshold",
+                "return",
             ],
             carousel=True,
         )
     ]
     return inquirer.prompt(questions)["threshold_method"]
+
+
+def get_auto_threshold():
+    questions = [
+        inquirer.List(
+            "auto_threshold",
+            message="Which auto thresholding method would you like to use?",
+            choices=[
+                "Select colorspace",
+                "Triangle auto threshold",
+                "Otsu auto threshold",
+                "return",
+            ],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["auto_threshold"]
+
+
+def get_binary_threshold():
+    questions = [
+        inquirer.List(
+            "binary_threshold",
+            message="What would you like to do?",
+            choices=[
+                "Visualize for threshold point",
+                "Select colorspace",
+                "Binary threshold",
+                "return",
+            ],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["binary_threshold"]
+
+
+def get_grayscale_selections():
+    questions = [
+        inquirer.List(
+            "grayscale",
+            message="What would you like to do?",
+            choices=[
+                "visualize colorspaces",
+                "convert to grayscale",
+                "return",
+            ],
+            carousel=True,
+        )
+    ]
+    return inquirer.prompt(questions)["grayscale"]
 
 
 def get_visualization():
@@ -259,8 +311,41 @@ def get_color_scatter_plot():
                 "Select colorspaces",
                 "visualize colorspaces in scatter plot",
                 "Create mask",
+                "return",
             ],
             carousel=True,
         )
     ]
     return inquirer.prompt(questions)["dual_channel_selection"]
+
+
+def get_points():
+    cords = inquirer.prompt(
+        [
+            inquirer.Text(
+                "coords",
+                message="Enter points separated by comma or space: ",
+                default="80 80 125 40",
+            )
+        ]
+    )
+
+    position = inquirer.prompt(
+        [
+            inquirer.List(
+                "position",
+                message="Is the region where you want to apply threshold above or below the line?",
+                choices=["above", "below"],
+                carousel=True,
+            )
+        ]
+    )
+
+    if position["position"] == "above":
+        position["position"] = True
+    else:
+        position["position"] = False
+
+    return [cords, position]
+
+

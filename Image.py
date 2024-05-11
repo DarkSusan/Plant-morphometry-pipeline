@@ -1,10 +1,10 @@
-import glob
 import json
 import os
 import Coordinates_extractor as Coords
 from functools import partial
 from matplotlib import pyplot as plt
 from plantcv import plantcv as pcv
+import inquirer
 
 
 class Image:
@@ -13,8 +13,13 @@ class Image:
         self.img_path = img_path
         self.background = background
         self.gray = None
-        self.threshold = None
         self.mask = None
+        self.skeleton = None
+        self.edge_objects = None
+        self.leaf = None
+        self.stem = None
+        self.branch_points = None
+        self.tip_points = None
         self.rgb_analysis = None
         self.watershed = None
         self.config = config
@@ -40,6 +45,9 @@ class Image:
     def region_of_interest(self, x=0, y=0, h=0, w=0):
         return pcv.roi.rectangle(img=self.img, x=x, y=y, h=h, w=w)
 
+    def region_of_interest_mask(self, x=0, y=0, h=0, w=0):
+        return pcv.roi.rectangle(img=self.mask, x=x, y=y, h=h, w=w)
+
     def rotate_image(self, angle):
         self.img = pcv.transform.rotate(self.img, angle, False)
 
@@ -48,19 +56,17 @@ class Image:
 
     def visualize_colorspaces(self):
         # Code to find the closest number divisible by 4 because visualize colorspaces is retarded
-        remainder = self.img.shape[1] % 4
+        width = self.img.shape[1]
+        remainder = width % 4
         if remainder <= 2:
-            new_width = self.img.shape[1] - remainder
-            # Crop the image to the new width
-            self.img = self.img[:, :new_width]
-            print(self.img.shape)
-            pcv.visualize.colorspaces(rgb_img=self.img, original_img=False)
+            new_width = width - remainder
         else:
-            new_width = self.img.shape[1] + (4 - remainder)
-            # Crop the image to the new width
-            self.img = self.img[:, :new_width]
-            print(self.img.shape)
-            pcv.visualize.colorspaces(rgb_img=self.img, original_img=False)
+            new_width = width + (4 - remainder)
+
+        # Crop the image to the new width
+        self.img = self.img[:, :new_width]
+        print(self.img.shape)
+        pcv.visualize.colorspaces(rgb_img=self.img, original_img=False)
 
         if not self.has_config:
             self.config.append(Image.visualize_colorspaces)
@@ -84,7 +90,7 @@ class Image:
             self.config.append(partial(Image.convert_cmyk, channel=channel))
 
     def otsu_auto_threshold(self, obj):
-        self.threshold = pcv.threshold.otsu(
+        self.mask = pcv.threshold.otsu(
             gray_img=self.gray, object_type=obj
         )
 
@@ -92,35 +98,124 @@ class Image:
             self.config.append(Image.otsu_auto_threshold)
 
     def triangle_auto_threshold(self, xstep_val, obj):
-        self.threshold = pcv.threshold.triangle(
+        self.mask = pcv.threshold.triangle(
             gray_img=self.gray, object_type=obj, xstep=xstep_val
         )
 
         if not self.has_config:
             self.config.append(Image.triangle_auto_threshold)
 
-    def dual_channel_threshold(self, x_ch, y_ch, pts):
-        self.threshold = pcv.threshold.dual_channels(
+    def binary_threshold(self, threshold_val, obj):
+        if self.gray is None:
+            print("Please convert the image to grayscale first.")
+            return
+        self.mask = pcv.threshold.binary(gray_img=self.gray, threshold=threshold_val, object_type=obj)
+
+        if not self.has_config:
+            self.config.append(Image.binary_threshold)
+
+    def dual_channel_threshold(self, x_ch, y_ch, pts, pts_placement):
+        self.mask = pcv.threshold.dual_channels(
             rgb_img=self.img,
             x_channel=x_ch,
             y_channel=y_ch,
             points=pts,
-            above=True,
+            above=pts_placement,
         )
 
         if not self.has_config:
             self.config.append(Image.dual_channel_threshold)
 
+    def roi_filter(self, roi):
+        self.mask = pcv.roi.filter(mask=self.mask, roi=roi, roi_type="partial")
+
+    def dilate_image(self, size, count):
+        self.mask = pcv.dilate(gray_img=self.mask, ksize=size, i=count)
+
+        if not self.has_config:
+            self.config.append(partial(Image.dilate_image, size=size, count=count))
+
     def fill_image(self, area_size):
         self.mask = pcv.fill_holes(
-            pcv.fill(bin_img=self.threshold, size=area_size)
+            pcv.fill(bin_img=self.mask, size=area_size)
         )
 
         if not self.has_config:
             self.config.append(partial(Image.fill_image, area_size=area_size))
 
+    def morphological_analysis(self):
+        pcv.params.dpi = 100
+        pcv.params.text_size = 1
+        pcv.params.text_thickness = 2
+        pcv.params.line_thickness = 3
+
+        self.skeleton = pcv.morphology.skeletonize(self.mask)
+        question = [
+            inquirer.Text("prune", message="Enter the size of pruning")
+        ]
+        size = int(inquirer.prompt(question)["prune"])
+        self.skeleton, seg_img, self.edge_objects = pcv.morphology.prune(skel_img=self.skeleton, size=size,
+                                                                         mask=self.mask)
+        while True:
+            skel_edit = inquirer.list_input("Would you like to again edit the skeleton?", choices=["yes", "no"])
+            match skel_edit:
+                case "yes":
+                    question = [
+                        inquirer.Text("prune", message="Enter the size of pruning")
+                    ]
+                    size = int(inquirer.prompt(question)["prune"])
+                    self.skeleton, _, self.edge_objects = pcv.morphology.prune(skel_img=self.skeleton, size=size,
+                                                                               mask=self.mask)
+                case "no":
+                    break
+
+        self.leaf, self.stem = pcv.morphology.segment_sort(skel_img=self.skeleton, objects=self.edge_objects,
+                                                           mask=self.mask)
+        pcv.morphology.fill_segments(mask=self.mask, objects=self.leaf, label="default")
+
+        self.branch_points = pcv.morphology.find_branch_pts(skel_img=self.skeleton, mask=self.mask, label="default")
+
+        self.tip_points = pcv.morphology.find_tips(skel_img=self.skeleton, mask=None, label="default")
+
+        segmented_img, labeled_img = pcv.morphology.segment_id(skel_img=self.skeleton,
+                                                               objects=self.leaf,
+                                                               mask=self.mask)
+
+        pcv.morphology.segment_path_length(segmented_img=segmented_img,
+                                           objects=self.leaf, label="default")
+
+        pcv.morphology.segment_euclidean_length(segmented_img=segmented_img,
+                                                objects=self.leaf, label="default")
+
+        pcv.morphology.segment_curvature(segmented_img=segmented_img,
+                                         objects=self.leaf, label="default")
+
+        pcv.morphology.segment_angle(segmented_img=segmented_img,
+                                     objects=self.leaf, label="default")
+
+        question = [
+            inquirer.Text("segment_tangent", message="Enter the size of the tangent")
+        ]
+        size = int(inquirer.prompt(question)["segment_tangent"])
+
+        pcv.morphology.segment_tangent_angle(segmented_img=segmented_img,
+                                             objects=self.leaf, size=size, label="default")
+
+        question = [
+            inquirer.Text("segment_insertion_angle", message="Enter the size of the insertion angle")
+        ]
+        size = int(inquirer.prompt(question)["segment_insertion_angle"])
+
+        pcv.morphology.segment_insertion_angle(skel_img=self.skeleton,
+                                               segmented_img=segmented_img,
+                                               leaf_objects=self.leaf,
+                                               stem_objects=self.stem,
+                                               size=size, label="default")
+
+        pcv.analyze.size(img=self.img, labeled_mask=self.mask, label="default")
+
     def color_correction(
-        self, radius_val=10, pos_val=3, nrows_val=6, ncols_val=4
+            self, radius_val=10, pos_val=3, nrows_val=6, ncols_val=4
     ):
         dataframe1, start1, space1 = pcv.transform.find_color_card(
             rgb_img=self.img,
@@ -182,11 +277,7 @@ class Image:
         )
         plt.show()
 
-    def watershed_segmentation(self, distance_val):
-        if self.background == "light":
-            color_mask = "BLACK"
-        else:
-            color_mask = "WHITE"
+    def watershed_segmentation(self, distance_val, color_mask="light"):
         masked = pcv.apply_mask(
             img=self.img, mask=self.mask, mask_color=color_mask
         )
@@ -206,6 +297,12 @@ class Image:
                     Image.watershed_segmentation, distance_val=distance_val
                 )
             )
+
+    def visualize_colorspace(self):
+        if self.gray is None:
+            print("Please convert the image to grayscale first.")
+            return
+        pcv.visualize.histogram(self.gray)
 
     def save_json(self, suffix=""):
         filename = f"{os.path.splitext(os.path.basename(self.img_path))[0]}{suffix}_results.json"
