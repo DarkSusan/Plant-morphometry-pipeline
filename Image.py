@@ -37,6 +37,11 @@ class Image:
         return Coords.select_coordinates(self.img)
 
     def crop_image(self, x=0, y=0, h=0, w=0):
+        remainder = w % 4
+
+        if remainder != 0:
+            w -= remainder
+
         self.img = pcv.crop(img=self.img, x=x, y=y, h=h, w=w)
 
         if not self.has_config:

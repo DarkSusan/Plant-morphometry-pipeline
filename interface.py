@@ -12,6 +12,7 @@ def grayscale_image(img):
         case "CMYK":
             img.convert_cmyk(ui.get_CMYK())
 
+
 def colorspace_selection(img):
     while True:
         match ui.get_grayscale_selections():
@@ -51,6 +52,10 @@ def auto_threshold(img):
             case "Select colorspace":
                 colorspace_selection(img)
             case "Triangle auto threshold":
+                if img.gray is None:
+                    print("[!] Image is not in grayscale. Converting to grayscale...")
+                    img.visualize_colorspaces()
+                    grayscale_image(img)
                 xstep_val = int(
                     inquirer.prompt(
                         [
@@ -61,11 +66,18 @@ def auto_threshold(img):
                         ]
                     )["xstep_val"]
                 )
-                img.triangle_auto_threshold(
-                    ui.get_integer_input(xstep_val),
-                    ui.get_object_type(),
-                )
+                try:
+                    img.triangle_auto_threshold(
+                        ui.get_integer_input(xstep_val),
+                        ui.get_object_type(),)
+                except ValueError:
+                    print("Invalid input. Please try again.")
+                    continue
             case "Otsu auto threshold":
+                if img.gray is None:
+                    print("[!] Image is not in grayscale. Converting to grayscale...")
+                    img.visualize_colorspaces()
+                    grayscale_image(img)
                 img.otsu_auto_threshold(
                     ui.get_object_type()
                 )
@@ -136,6 +148,11 @@ def dual_channel_threshold(img):
                 ]
                 print(points)
 
+                if x_channel or y_channel is None:
+                    print(
+                        "\n\n [!] You need to select colorspaces first!"
+                    )
+                    continue
                 try:
                     img.dual_channel_threshold(
                         x_channel,
@@ -153,23 +170,27 @@ def dual_channel_threshold(img):
                         placement['position']
                     )
                 except ValueError:
-                    print("Invalid input. Please try again.")
+                    print("\n\n [!] Invalid input. Please try again.")
                     continue
             case "return":
                 break
 
 
 def binary_theshold(img):
-    threshold_val = int(
-        inquirer.prompt(
-            [
-                inquirer.Text(
-                    "threshold_val",
-                    message="Enter threshold value for binary thresholding",
-                )
-            ]
-        )["threshold_val"]
-    )
+    try:
+        threshold_val = int(
+            inquirer.prompt(
+                [
+                    inquirer.Text(
+                        "threshold_val",
+                        message="Enter threshold value for binary thresholding",
+                    )
+                ]
+            )["threshold_val"]
+        )
+    except ValueError:
+        print("Invalid input. Please try again.")
+        return
     img.binary_threshold(
         threshold_val,
         ui.get_object_type(),
