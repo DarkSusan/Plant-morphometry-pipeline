@@ -282,7 +282,7 @@ def get_visualization():
         inquirer.List(
             "visualization",
             message="What analysis would you like to visualize?",
-            choices=["Color Analysis"],
+            choices=["Color Analysis", "All Results"],
             carousel=True,
         )
     ]

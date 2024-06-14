@@ -256,6 +256,10 @@ class Image:
             line_position=2380,
             label="default",
         )
+        pcv.analyze.color(self.img, kept_mask, colorspaces="all")
+        pcv.analyze.color(self.img, kept_mask, colorspaces="hsv")
+        pcv.analyze.color(self.img, kept_mask, colorspaces="lab")
+        pcv.analyze.color(self.img, kept_mask, colorspaces="rgb")
 
         if not self.has_config:
             self.config.append(
@@ -310,14 +314,12 @@ class Image:
         pcv.visualize.histogram(self.gray)
 
     def save_json(self, suffix=""):
-        filename = f"{os.path.splitext(os.path.basename(self.img_path))[0]}{suffix}_results.json"
+        filename = f"results/{os.path.splitext(os.path.basename(self.img_path))[0]}{suffix}_results.json"
         print("Saving the results...")
         pcv.outputs.save_results(filename)
 
-        # Open the results.json file
         with open(filename) as f:
             data = json.load(f)
 
-        # Write the formatted data back to the file
         with open(filename, "w") as f:
             json.dump(data, f, indent=4)

@@ -1,3 +1,5 @@
+import subprocess
+import os
 import inquirer
 import ui
 import re
@@ -69,7 +71,7 @@ def auto_threshold(img):
                 try:
                     img.triangle_auto_threshold(
                         ui.get_integer_input(xstep_val),
-                        ui.get_object_type(),)
+                        ui.get_object_type(), )
                 except ValueError:
                     print("Invalid input. Please try again.")
                     continue
@@ -287,3 +289,8 @@ def visualize_results(img):
                     img.color_histogram("LAB")
                 case "HSV":
                     img.color_histogram("HSV")
+        case "All Results":
+            if os.listdir('./results'):
+                subprocess.run(["streamlit", "run", "plotter.py"])
+            else:
+                print("Results directory is empty. Cannot visualize results.")

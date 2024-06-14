@@ -62,6 +62,7 @@ def interactive(checkbox):
                                 break
                 case "RGB analysis":
                     interface.RGB_analysis(img)
+                    img.save_json("_RGB")
                 case "morphology analysis":
                     img.morphological_analysis()
                     img.save_json("_morphology")
@@ -70,6 +71,7 @@ def interactive(checkbox):
                                                    ["white", "black"])
                     color = inquirer.prompt([color])["color"]
                     interface.watershed_segmentation(img, color)
+                    img.save_json("_watershed")
                 case "visualize results":
                     interface.visualize_results(img)
                 case "next image":
